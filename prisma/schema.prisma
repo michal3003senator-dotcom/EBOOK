@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String    @default("Admin")
+  passwordHash String
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ip        String
+  email     String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+  @@index([email, createdAt])
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  subtitle      String   @default("")
+  priceCents    Int
+  compareAtCents Int?
+  currency      String   @default("PLN")
+  vatRate       Int      @default(23)
+  filePath      String?
+  fileName      String   @default("ebook.pdf")
+  samplePages   String   @default("1-22")
+  downloadLimit Int      @default(10)
+  downloadDays  Int      @default(365)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        Order[]
+}
+
+model Coupon {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  type       String    @default("PERCENT") // PERCENT | FIXED
+  value      Int       // % albo grosze
+  maxUses    Int?
+  usedCount  Int       @default(0)
+  validFrom  DateTime?
+  validUntil DateTime?
+  active     Boolean   @default(true)
+  note       String    @default("")
+  createdAt  DateTime  @default(now())
+  orders     Order[]
+}
+
+model Affiliate {
+  id            String            @id @default(cuid())
+  code          String            @unique
+  name          String
+  email         String
+  commissionPct Int               @default(30)
+  token         String            @unique
+  active        Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  orders        Order[]
+  payouts       AffiliatePayout[]
+}
+
+model AffiliatePayout {
+  id          String    @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  amountCents Int
+  note        String    @default("")
+  createdAt   DateTime  @default(now())
+}
+
+model Customer {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  name             String   @default("")
+  marketingConsent Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  orders           Order[]
+}
+
+model Order {
+  id              String          @id @default(cuid())
+  number          Int             @unique
+  accessToken     String          @unique
+  status          String          @default("PENDING") // PENDING | PAID | FAILED | CANCELED | REFUNDED
+  email           String
+  name            String          @default("")
+  customerId      String?
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  productId       String
+  product         Product         @relation(fields: [productId], references: [id])
+  unitPriceCents  Int
+  discountCents   Int             @default(0)
+  totalCents      Int
+  currency        String          @default("PLN")
+  couponId        String?
+  coupon          Coupon?         @relation(fields: [couponId], references: [id])
+  affiliateId     String?
+  affiliate       Affiliate?      @relation(fields: [affiliateId], references: [id])
+  commissionCents Int             @default(0)
+  provider        String
+  providerRef     String?
+  termsAcceptedAt DateTime
+  waiverAcceptedAt DateTime
+  marketingConsent Boolean        @default(false)
+  wantsInvoice    Boolean         @default(false)
+  companyName     String          @default("")
+  taxId           String          @default("")
+  address         String          @default("")
+  visitorId       String?
+  sessionId       String?
+  source          String          @default("bezpośrednie")
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  referrerHost    String?
+  device          String?
+  country         String?
+  note            String          @default("")
+  createdAt       DateTime        @default(now())
+  paidAt          DateTime?
+  refundedAt      DateTime?
+  downloadTokens  DownloadToken[]
+  emails          EmailLog[]
+  paymentEvents   PaymentEvent[]
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model DownloadToken {
+  id           String        @id @default(cuid())
+  token        String        @unique
+  orderId      String
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  maxDownloads Int
+  downloads    Int           @default(0)
+  revoked      Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  logs         DownloadLog[]
+}
+
+model DownloadLog {
+  id        String        @id @default(cuid())
+  tokenId   String
+  token     DownloadToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  ipHash    String
+  userAgent String        @default("")
+  createdAt DateTime      @default(now())
+}
+
+model PaymentEvent {
+  id        String   @id @default(cuid())
+  provider  String
+  eventId   String
+  type      String
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id])
+  payload   String
+  createdAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  template  String
+  status    String   // SENT | LOGGED | FAILED
+  error     String?
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  source           String   @default("bezpośrednie")
+  marketingConsent Boolean  @default(false)
+  visitorId        String?
+  createdAt        DateTime @default(now())
+}
+
+/// Zdarzenia analityczne (bez cookies: visitorId = dzienny hash IP+UA).
+model Event {
+  id           String   @id @default(cuid())
+  type         String
+  name         String?
+  value        Int?
+  path         String   @default("/")
+  visitorId    String
+  sessionId    String
+  source       String   @default("bezpośrednie")
+  referrerHost String?
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  utmContent   String?
+  utmTerm      String?
+  device       String   @default("desktop")
+  browser      String   @default("inna")
+  os           String   @default("inny")
+  country      String   @default("??")
+  lang         String   @default("")
+  affiliate    String?
+  day          String   // YYYY-MM-DD (Europe/Warsaw)
+  hour         Int
+  dow          Int      // 0 = poniedziałek
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([day, type])
+  @@index([sessionId])
+  @@index([visitorId, createdAt])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
