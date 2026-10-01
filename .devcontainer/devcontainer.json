@@ -1,0 +1,13 @@
+{
+  "name": "Faceless Cash-Cow — sklep (podgląd)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postAttachCommand": "npm run dev",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Sklep", "onAutoForward": "openBrowser" }
+  },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] }
+  }
+}

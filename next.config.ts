@@ -8,9 +8,16 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
+// Za reverse proxy / tunelem (np. GitHub Codespaces) publiczny host różni się od nagłówka Host.
+const publicUrl = process.env.APP_URL ? new URL(process.env.APP_URL) : null;
+
 const config: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["better-sqlite3"],
+  allowedDevOrigins: publicUrl ? [publicUrl.hostname] : [],
+  experimental: {
+    serverActions: { allowedOrigins: publicUrl ? [publicUrl.host] : [] },
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
