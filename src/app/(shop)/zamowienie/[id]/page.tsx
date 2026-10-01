@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { safeEqual } from "@/lib/crypto";
+import { partnerLinks } from "@/lib/affiliates";
 import { db } from "@/lib/db";
 import { money } from "@/lib/format";
 import { StatusPoller } from "./status-poller";
@@ -17,6 +18,8 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
   });
   if (!order || !t || !safeEqual(t, order.accessToken)) notFound();
   const token = order.downloadTokens[0];
+  const partner = order.status === "PAID" ? await db.affiliate.findUnique({ where: { email: order.email } }) : null;
+  const links = partner?.active ? partnerLinks(partner) : null;
 
   return (
     <main className="container-page max-w-2xl py-16">
@@ -36,6 +39,24 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
             <p className="mt-6 text-sm text-ink-400">
               Plik jest oznaczony Twoim adresem e-mail (licencja osobista). Masz mało czasu? Zacznij od rozdziałów 1, 6 i 9.
             </p>
+            {partner && links && (
+              <div className="mt-8 rounded-xl border border-gold/40 bg-gold/5 p-5 text-left">
+                <p className="font-bold text-gold">Poleć i zarabiaj {partner.commissionPct}%</p>
+                <p className="mt-1 text-sm text-ink-300">
+                  Za każdy zakup z Twojego linku dostajesz {partner.commissionPct}% prowizji — dokładnie tak, jak uczy rozdział 11.
+                </p>
+                <p className="mt-3 break-all rounded-lg bg-ink-950 p-3 font-mono text-sm text-gold">{links.link}</p>
+                <p className="mt-3 text-sm">
+                  <a href={links.panel} className="text-ink-300 underline">
+                    Panel partnera
+                  </a>{" "}
+                  ·{" "}
+                  <Link href="/program-partnerski" className="text-ink-300 underline">
+                    Zasady
+                  </Link>
+                </p>
+              </div>
+            )}
           </>
         ) : order.status === "PENDING" ? (
           <>

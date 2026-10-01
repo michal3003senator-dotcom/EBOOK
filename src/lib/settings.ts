@@ -11,6 +11,10 @@ export const settingsSchema = z.object({
   sellerEmail: z.string().max(200).default("kontakt@example.com"),
   announcement: z.string().max(200).default(""),
   leadMagnetEnabled: z.boolean().default(true),
+  affiliateEnabled: z.boolean().default(true),
+  affiliateAutoEnroll: z.boolean().default(true),
+  affiliateDefaultPct: z.number().int().min(1).max(90).default(30),
+  affiliateMinPayoutCents: z.number().int().min(0).default(5000),
   metaTitle: z.string().max(120).default("Faceless Cash-Cow 2026 — viralowe wideo bez pokazywania twarzy"),
   metaDescription: z
     .string()

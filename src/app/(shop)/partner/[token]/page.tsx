@@ -3,14 +3,15 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { int, money, percent, ratio } from "@/lib/format";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Panel partnera", robots: { index: false } };
 
 export default async function PartnerPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const a = await db.affiliate.findUnique({ where: { token }, include: { payouts: true } });
-  if (!a) notFound();
+  const [a, s] = await Promise.all([db.affiliate.findUnique({ where: { token }, include: { payouts: true } }), getSettings()]);
+  if (!a || a.pending) notFound();
 
   const [visits, orders] = await Promise.all([
     db.event.groupBy({ by: ["sessionId"], where: { affiliate: a.code, type: "pageview" } }),
@@ -36,6 +37,7 @@ export default async function PartnerPage({ params }: { params: Promise<{ token:
         Twoja prowizja: <b className="text-white">{a.commissionPct}%</b> od każdej opłaconej sprzedaży (atrybucja 30 dni). Pamiętaj o
         oznaczeniu linku jako reklamy (rozdział 11.5).
       </p>
+      {!a.active && <p className="mt-4 rounded-lg bg-coral/10 p-3 text-sm text-coral">Konto partnera jest wyłączone — link nie nalicza prowizji.</p>}
       <div className="card mt-6 p-4">
         <p className="text-xs text-ink-400">Twój link</p>
         <p className="mt-1 break-all font-mono text-gold">{link}</p>
@@ -48,6 +50,11 @@ export default async function PartnerPage({ params }: { params: Promise<{ token:
           </div>
         ))}
       </div>
+      <p className="mt-6 text-sm text-ink-400">
+        Wypłaty raz w miesiącu{s.affiliateMinPayoutCents ? ` od ${money(s.affiliateMinPayoutCents)} salda` : ""} — napisz na{" "}
+        <a className="underline" href={`mailto:${s.sellerEmail}`}>{s.sellerEmail}</a>.{" "}
+        <a className="underline" href="/program-partnerski">Zasady programu</a>
+      </p>
     </main>
   );
 }

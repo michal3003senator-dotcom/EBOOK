@@ -1,5 +1,6 @@
 import "server-only";
 import type { Coupon, Order, Prisma, Product } from "@/generated/prisma/client";
+import { ensureBuyerAffiliate, partnerLinks } from "./affiliates";
 import { trackServerEvent } from "./analytics/track";
 import { randomToken } from "./crypto";
 import { db } from "./db";
@@ -63,12 +64,14 @@ export async function sendPurchaseEmail(orderId: string, fresh = false) {
   const existing = order.downloadTokens[0];
   const usable = existing && existing.expiresAt > new Date() && existing.downloads < existing.maxDownloads;
   const token = !fresh && usable ? existing : await issueDownloadToken(order);
+  const partner = await db.affiliate.findUnique({ where: { email: order.email } });
   const mail = purchaseEmail(
     { ...order, productName: order.product.name },
     `${env.APP_URL}/d/${token.token}`,
     token.expiresAt,
     token.maxDownloads,
     await getSettings(),
+    partner?.active ? { ...partnerLinks(partner), pct: partner.commissionPct } : null,
   );
   return sendMail({ to: order.email, ...mail, template: "purchase", orderId: order.id });
 }
@@ -94,6 +97,7 @@ export async function markPaid(orderId: string, providerRef?: string | null) {
     },
   });
   if (order.couponId) await db.coupon.update({ where: { id: order.couponId }, data: { usedCount: { increment: 1 } } });
+  await ensureBuyerAffiliate(order.email, order.name);
 
   await sendPurchaseEmail(orderId);
   await trackServerEvent("purchase", { visitorId: order.visitorId, sessionId: order.sessionId, value: order.totalCents, name: `#${order.number}` });

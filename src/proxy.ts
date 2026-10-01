@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth-token";
+import { REF_COOKIE, REF_DAYS } from "@/lib/constants";
 
 const REF_RE = /^[A-Za-z0-9_-]{2,40}$/;
-import { REF_COOKIE } from "@/lib/constants";
-const REF_DAYS = 30;
 
 export async function proxy(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;

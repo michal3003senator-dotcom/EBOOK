@@ -66,10 +66,13 @@ model Affiliate {
   id            String            @id @default(cuid())
   code          String            @unique
   name          String
-  email         String
+  email         String            @unique
   commissionPct Int               @default(30)
   token         String            @unique
   active        Boolean           @default(true)
+  pending       Boolean           @default(false) // zgłoszenie czeka na akceptację
+  origin        String            @default("manual") // manual | buyer | application
+  channel       String            @default("")
   createdAt     DateTime          @default(now())
   orders        Order[]
   payouts       AffiliatePayout[]

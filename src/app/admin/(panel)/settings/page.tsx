@@ -60,6 +60,25 @@ export default async function SettingsPage() {
               <input type="checkbox" name="leadMagnetEnabled" defaultChecked={s.leadMagnetEnabled} className="size-4 accent-gold" />
               Pokazuj formularz bezpłatnego fragmentu (zbieranie leadów)
             </label>
+            <fieldset className="space-y-3 rounded-lg border border-ink-700 p-4">
+              <legend className="px-1 text-sm font-semibold text-white">Program partnerski</legend>
+              <label className="flex items-center gap-2 text-sm text-ink-300">
+                <input type="checkbox" name="affiliateEnabled" defaultChecked={s.affiliateEnabled} className="size-4 accent-gold" />
+                Program włączony (strona /program-partnerski, link w stopce i FAQ)
+              </label>
+              <label className="flex items-center gap-2 text-sm text-ink-300">
+                <input type="checkbox" name="affiliateAutoEnroll" defaultChecked={s.affiliateAutoEnroll} className="size-4 accent-gold" />
+                Każdy kupujący automatycznie dostaje link partnerski (w e-mailu i na stronie podziękowania)
+              </label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Domyślna prowizja (%)">
+                  <input name="affiliateDefaultPct" type="number" min="1" max="90" defaultValue={s.affiliateDefaultPct} className="field" />
+                </Field>
+                <Field label="Minimalna wypłata (zł)" hint="0 = bez minimum">
+                  <input name="affiliateMinPayout" type="number" min="0" step="1" defaultValue={s.affiliateMinPayoutCents / 100} className="field" />
+                </Field>
+              </div>
+            </fieldset>
           </ActionForm>
         </Panel>
         <Panel title="Zmiana hasła">

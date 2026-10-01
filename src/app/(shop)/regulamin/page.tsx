@@ -61,7 +61,12 @@ export default async function Terms() {
         Konsument może skorzystać z pozasądowych sposobów rozpatrywania reklamacji, m.in. za pośrednictwem miejskiego lub powiatowego
         rzecznika konsumentów albo wojewódzkiego inspektoratu Inspekcji Handlowej.
       </p>
-      <h2>§10. Postanowienia końcowe</h2>
+      <h2>§10. Program partnerski</h2>
+      <p>
+        Zasady programu partnerskiego (prowizje za polecenia) opisuje strona /program-partnerski. Udział jest dobrowolny i nie wpływa na
+        warunki zakupu.
+      </p>
+      <h2>§11. Postanowienia końcowe</h2>
       <p>
         W sprawach nieuregulowanych stosuje się przepisy prawa polskiego, w szczególności Kodeksu cywilnego i ustawy o prawach konsumenta.
         Zasady przetwarzania danych opisuje polityka prywatności.

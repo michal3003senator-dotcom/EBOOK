@@ -253,6 +253,7 @@ export async function getDashboard(rangeKey: string | undefined) {
     sample_submit: "Wyślij fragment",
     sample_download: "Pobierz fragment",
     checkout_pay: "Kasa: Zapłać",
+    partner_apply: "Zgłoszenie partnera",
   };
   const ctas = count(clientEvents.filter((e) => e.type === "cta_click"), (e) => ctaLabels[e.name ?? ""] ?? e.name);
   const faqOpens = count(clientEvents.filter((e) => e.type === "faq_open"), (e) => faq[Number(e.name) - 1]?.q ?? e.name);

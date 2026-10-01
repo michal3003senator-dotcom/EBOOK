@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { applyAsAffiliate } from "@/lib/affiliates";
 import { resolveVisit, trackServerEvent } from "@/lib/analytics/track";
 import { REF_COOKIE } from "@/lib/constants";
 import { db } from "@/lib/db";
@@ -79,7 +80,8 @@ export async function checkout(_: FormState, form: FormData): Promise<FormState>
 
   const visit = await resolveVisit({});
   const refCode = (await cookies()).get(REF_COOKIE)?.value ?? visit.base.affiliate;
-  const affiliate = refCode ? await db.affiliate.findFirst({ where: { code: refCode, active: true } }) : null;
+  const referrer = refCode ? await db.affiliate.findFirst({ where: { code: refCode, active: true } }) : null;
+  const affiliate = referrer && referrer.email !== d.email ? referrer : null; // bez prowizji za zakup z własnego linku
   const free = price.totalCents === 0;
   let provider: ReturnType<typeof activeProvider> | null = null;
   if (!free) {
@@ -150,4 +152,23 @@ export async function checkCoupon(productId: string, code: string) {
   if (!product) return { error: "Produkt niedostępny" };
   const p = await priceFor(product, code);
   return p.couponError ? { error: p.couponError } : { discountCents: p.discountCents, totalCents: p.totalCents };
+}
+
+export async function applyPartner(_: FormState, form: FormData): Promise<FormState> {
+  const { ip } = await clientInfo();
+  if (limited(`partner:${ip}`, 5, 600_000)) return { error: "Zbyt wiele prób. Spróbuj za kilka minut." };
+  if (!(await getSettings()).affiliateEnabled) return { error: "Program partnerski jest chwilowo zamknięty." };
+  const parsed = z
+    .object({
+      name: z.string().trim().min(2, "Podaj imię lub nazwę").max(120),
+      email,
+      channel: z.string().trim().max(300).default(""),
+      terms: checked("Zaakceptuj zasady programu"),
+    })
+    .safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const { terms: _t, ...data } = parsed.data;
+  const result = await applyAsAffiliate(data);
+  // Nie zdradzamy, czy adres jest już w programie — informacja idzie e-mailem.
+  return { ok: true, url: result === "approved" ? "approved" : "sent" };
 }

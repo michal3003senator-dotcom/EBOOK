@@ -350,6 +350,10 @@ export const faq = [
     a: "Przy treściach cyfrowych prawo odstąpienia wygasa, jeśli przed pobraniem wyraźnie zgodzisz się na natychmiastowe dostarczenie. Dlatego zanim kupisz, możesz bezpłatnie pobrać wstęp i cały rozdział 1.",
   },
   {
+    q: "Czy mogę zarabiać, polecając e-book?",
+    a: "Tak. Każdy kupujący dostaje w e-mailu własny link partnerski i prowizję od każdego zakupu z polecenia. Szczegóły na stronie programu partnerskiego.",
+  },
+  {
     q: "Czy dostanę rachunek lub fakturę?",
     a: "Tak — zaznacz odpowiednią opcję w formularzu zamówienia i podaj dane firmy. Dokument wyślemy na e-mail.",
   },

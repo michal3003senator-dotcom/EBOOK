@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { approveAffiliate, sendPartnerWelcome } from "@/lib/affiliates";
 import { endSession, requireAdmin } from "@/lib/auth";
 import { randomToken } from "@/lib/crypto";
 import { db } from "@/lib/db";
@@ -122,10 +123,32 @@ export async function createAffiliate(_: ActionState, form: FormData): Promise<A
     })
     .safeParse(Object.fromEntries(form));
   if (!parsed.success) return fail(parsed.error);
+  const email = parsed.data.email.toLowerCase();
   if (await db.affiliate.findUnique({ where: { code: parsed.data.code } })) return { error: "Taki kod partnera już istnieje" };
-  await db.affiliate.create({ data: { ...parsed.data, token: randomToken(18) } });
+  if (await db.affiliate.findUnique({ where: { email } })) return { error: "Ten e-mail jest już w programie" };
+  const a = await db.affiliate.create({ data: { ...parsed.data, email, token: randomToken(18) } });
+  await sendPartnerWelcome(a);
   revalidatePath("/admin/affiliates");
-  return { ok: "Dodano partnera" };
+  return { ok: "Dodano partnera i wysłano mu link e-mailem" };
+}
+
+export async function approvePartner(id: string) {
+  await requireAdmin();
+  await approveAffiliate(id);
+  revalidatePath("/admin/affiliates");
+}
+
+export async function rejectPartner(id: string) {
+  await requireAdmin();
+  await db.affiliate.deleteMany({ where: { id, pending: true } });
+  revalidatePath("/admin/affiliates");
+}
+
+export async function setCommission(id: string, form: FormData) {
+  await requireAdmin();
+  const pct = z.coerce.number().int().min(1).max(90).safeParse(form.get("pct"));
+  if (pct.success) await db.affiliate.update({ where: { id }, data: { commissionPct: pct.data } });
+  revalidatePath("/admin/affiliates");
 }
 
 export async function toggleAffiliate(id: string) {
@@ -148,7 +171,14 @@ export async function addPayout(affiliateId: string, form: FormData) {
 export async function updateSettings(_: ActionState, form: FormData): Promise<ActionState> {
   await requireAdmin();
   const raw = Object.fromEntries(form);
-  const parsed = settingsSchema.safeParse({ ...raw, leadMagnetEnabled: raw.leadMagnetEnabled === "on" });
+  const parsed = settingsSchema.safeParse({
+    ...raw,
+    leadMagnetEnabled: raw.leadMagnetEnabled === "on",
+    affiliateEnabled: raw.affiliateEnabled === "on",
+    affiliateAutoEnroll: raw.affiliateAutoEnroll === "on",
+    affiliateDefaultPct: Number(raw.affiliateDefaultPct),
+    affiliateMinPayoutCents: Math.round(Number(raw.affiliateMinPayout ?? 0) * 100),
+  });
   if (!parsed.success) return fail(parsed.error);
   await saveSettings(parsed.data);
   revalidatePath("/", "layout");

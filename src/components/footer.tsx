@@ -24,6 +24,7 @@ export function Footer({ s }: { s: Settings }) {
         <nav className="flex flex-col gap-2 md:items-end" aria-label="Informacje prawne">
           <Link href="/regulamin" className="hover:text-white">Regulamin</Link>
           <Link href="/polityka-prywatnosci" className="hover:text-white">Polityka prywatności</Link>
+          {s.affiliateEnabled && <Link href="/program-partnerski" className="hover:text-white">Program partnerski — zarabiaj {s.affiliateDefaultPct}%</Link>}
           <a href={`mailto:${s.sellerEmail}`} className="hover:text-white">Kontakt</a>
         </nav>
       </div>

@@ -492,7 +492,17 @@ export function Faq() {
               {f.q}
               <span aria-hidden className="text-ink-400 transition group-open:rotate-45">+</span>
             </summary>
-            <p className="px-5 pb-5 text-ink-300">{f.a}</p>
+            <p className="px-5 pb-5 text-ink-300">
+              {f.a}
+              {f.q.startsWith("Czy mogę zarabiać") && (
+                <>
+                  {" "}
+                  <Link href="/program-partnerski" className="text-gold underline">
+                    Zobacz program partnerski
+                  </Link>
+                </>
+              )}
+            </p>
           </details>
         ))}
       </div>
