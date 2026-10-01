@@ -2,7 +2,7 @@
   "name": "Faceless Cash-Cow — sklep (podgląd)",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
   "postCreateCommand": "bash .devcontainer/setup.sh",
-  "postAttachCommand": "bash .devcontainer/env.sh && npm run dev",
+  "postAttachCommand": "bash .devcontainer/update.sh",
   "forwardPorts": [
     3000
   ],
