@@ -9,14 +9,18 @@ const securityHeaders = [
 ];
 
 // Za reverse proxy / tunelem (np. GitHub Codespaces) publiczny host różni się od nagłówka Host.
-const publicUrl = process.env.APP_URL ? new URL(process.env.APP_URL) : null;
+const publicHosts = [
+  process.env.APP_URL && new URL(process.env.APP_URL).host,
+  process.env.CODESPACE_NAME &&
+    `${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN ?? "app.github.dev"}`,
+].filter((h): h is string => Boolean(h));
 
 const config: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["better-sqlite3"],
-  allowedDevOrigins: publicUrl ? [publicUrl.hostname] : [],
+  allowedDevOrigins: publicHosts.map((h) => h.split(":")[0]!),
   experimental: {
-    serverActions: { allowedOrigins: publicUrl ? [publicUrl.host] : [] },
+    serverActions: { allowedOrigins: publicHosts },
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

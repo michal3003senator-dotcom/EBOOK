@@ -26,6 +26,10 @@ npm run setup                  # baza + konto admina + produkt (+ kopiuje PDF z 
 npm run dev                    # http://localhost:3000, panel: /admin
 ```
 
+**Hasło admina:** zmienisz je w panelu → Ustawienia. Jeśli go nie pamiętasz, wpisz nowe w `.env` (`ADMIN_PASSWORD`, min. 12 znaków) i uruchom `npm run admin:reset`.
+
+**Podgląd bez instalacji:** GitHub → Code → Codespaces → Create codespace. Sklep uruchomi się sam (płatności testowe, login `admin@example.com` / `demo-haslo-2026`).
+
 Plik e-booka możesz też wgrać w panelu: **Produkt → Wgraj PDF**. Pliki trzymane są poza `public/` (`storage/`), więc nie da się ich pobrać bez opłaconego linku.
 
 ## Podpięcie bramki płatności (Stripe)
