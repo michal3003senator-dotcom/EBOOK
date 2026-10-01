@@ -1,0 +1,26 @@
+services:
+  shop:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: file:/app/data/app.db
+      STORAGE_DIR: /app/storage
+    volumes:
+      - ./data:/app/data
+      - ./storage:/app/storage
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from ${DOMAIN:?ustaw DOMAIN w .env} --to shop:3000
+    volumes:
+      - caddy:/data
+
+volumes:
+  caddy:

@@ -10,6 +10,8 @@ import { getProvider } from "./payments";
 import type { ProviderEvent } from "./payments/types";
 import { getSettings } from "./settings";
 
+const MIN_PAYMENT_CENTS = 200;
+
 export type Pricing = { unitCents: number; discountCents: number; totalCents: number; coupon: Coupon | null; couponError?: string };
 
 export async function priceFor(product: Product, code?: string | null): Promise<Pricing> {
@@ -28,8 +30,10 @@ export async function priceFor(product: Product, code?: string | null): Promise<
   if (invalid || !c) return { ...base, couponError: "Kod rabatowy jest nieprawidłowy lub wygasł" };
 
   const raw = c.type === "PERCENT" ? Math.round((product.priceCents * Math.min(c.value, 100)) / 100) : c.value;
-  // Minimalna kwota płatności 2 zł (limit bramek); 100% rabatu obsługujemy osobno jako zamówienie darmowe.
-  const discountCents = Math.min(raw, product.priceCents);
+  // Bramki nie przyjmują płatności poniżej 2 zł: rabat daje 0 zł (zamówienie darmowe) albo min. 2 zł.
+  let discountCents = Math.min(raw, product.priceCents);
+  const rest = product.priceCents - discountCents;
+  if (rest > 0 && rest < MIN_PAYMENT_CENTS) discountCents = Math.max(0, product.priceCents - MIN_PAYMENT_CENTS);
   return { unitCents: product.priceCents, discountCents, totalCents: product.priceCents - discountCents, coupon: c };
 }
 

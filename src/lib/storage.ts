@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
@@ -12,11 +13,10 @@ const cacheDir = join(root, "cache");
 
 export const productFile = (name: string) => join(productsDir, basename(name));
 
-export async function saveProductFile(file: File) {
+export async function saveProductFile(bytes: Buffer) {
   await mkdir(productsDir, { recursive: true });
-  const bytes = Buffer.from(await file.arrayBuffer());
   if (bytes.subarray(0, 5).toString() !== "%PDF-") throw new Error("To nie jest plik PDF");
-  const name = `${Date.now()}-${sha256(bytes.toString("base64")).slice(0, 10)}.pdf`;
+  const name = `${Date.now()}-${createHash("sha256").update(bytes).digest("hex").slice(0, 10)}.pdf`;
   await writeFile(productFile(name), bytes);
   return name;
 }
