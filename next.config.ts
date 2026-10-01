@@ -14,6 +14,8 @@ const publicHosts = [
   process.env.CODESPACE_NAME &&
     `${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN ?? "app.github.dev"}`,
 ].filter((h): h is string => Boolean(h));
+// Tylko w Codespaces: cała domena przekierowań portów (nigdy na produkcji).
+if (process.env.CODESPACE_NAME) publicHosts.push(`**.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN ?? "app.github.dev"}`);
 
 const config: NextConfig = {
   poweredByHeader: false,
